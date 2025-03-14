@@ -14,22 +14,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { signIn, useSession } from "next-auth/react";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import google from "@/public/google.svg";
 
 export default function Home() {
   const pathname = usePathname();
   const path = pathname === "/" ? "Home" : pathname;
-  const {data: session} = useSession();
-  if (!session?.user) {
-    return(
-      <div className="flex justify-center items-center h-screen">
-        <button onClick={()=> signIn('google')} className="text-xl font-semibold cursor-pointer flex items-center gap-2"><Image src={google} alt="google icon"/> Please sign in to continue</button>
-      </div>
-    );
-  }
+
   return (
     <SidebarProvider>
       <AppSidebar />

@@ -1,12 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  BookOpen,
-  Bot,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react";
+import { AudioWaveform, BookOpen, Bot, Command, GalleryVerticalEnd, Settings2, SquareTerminal } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -18,6 +13,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useSession } from "next-auth/react";
+import { TeamSwitcher } from "@/components/team-switcher";
 
 export function AppSidebar({ ...props }) {
   const { data: session } = useSession();
@@ -27,6 +23,12 @@ export function AppSidebar({ ...props }) {
       email: session?.user?.email,
       avatar: session?.user?.image,
     },
+    teams: [
+      {
+        name: "Agora",
+        logo: Command,
+      },
+    ],
     navMain: [
       {
         title: "Playground",
@@ -118,8 +120,9 @@ export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <h1 className="text-xl font-semibold text-center">E-commerce Admin</h1>
+        <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
