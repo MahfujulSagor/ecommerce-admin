@@ -1,9 +1,10 @@
 "use client";
 import { useSession, SessionProvider, signIn } from "next-auth/react";
 import Image from "next/image";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import google from "@/public/google.svg";
 import { toast } from "sonner";
+import Loader from "./loader.js";
 
 const SessionProviderWrapper = ({ children }) => {
   return (
@@ -17,12 +18,22 @@ export default SessionProviderWrapper;
 
 const AuthCheck = ({ children }) => {
   const { data: session, status } = useSession();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      toast.success(`Welcome back!`);
+    if (status === "authenticated" && !session?.user?.isWelcomeMessageShown) {
+      if (!sessionStorage.getItem("welcomeMessageShown")) {
+        // Show success message if it's the first time this session
+        toast.success(`Welcome back!`);
+        sessionStorage.setItem("welcomeMessageShown", "true"); // Set flag to indicate message shown
+      }
     }
-  }, [status]);
+
+    // Ensure we only check authentication once
+    if (status !== "loading") {
+      setChecked(true);
+    }
+  }, [status, session]);
 
   const handleSignIn = async () => {
     try {
@@ -36,9 +47,9 @@ const AuthCheck = ({ children }) => {
     }
   };
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  };
+  if (status === "loading" || !checked) {
+    return <Loader />;
+  }
 
   if (!session?.user) {
     return (

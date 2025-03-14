@@ -7,3 +7,8 @@ const Settings = () => {
 }
 
 export default Settings
+
+export const metadata = {
+  title: "Agora: Settings",
+  description: "Manage your account settings, preferences, and configurations on Agora.",
+};

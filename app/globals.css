@@ -46,7 +46,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --secondary: #22282E;
+    --secondary: #22282e;
   }
 }
 
@@ -125,5 +125,46 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.loader {
+  position: relative;
+  width: 208px;
+  display: flex;
+  justify-content: space-between;
+}
+.loader::after,
+.loader::before {
+  content: "";
+  display: inline-block;
+  width: 100px;
+  height: 100px;
+  background-color: #fff;
+  background-image: radial-gradient(circle 28px, #000000 100%, transparent 0);
+  background-repeat: no-repeat;
+  border-radius: 50%;
+  animation: eyeMove 2s infinite;
+}
+@keyframes eyeMove {
+  0%,
+  10% {
+    background-position: 0px 0px;
+  }
+  13%,
+  40% {
+    background-position: -18px 0px;
+  }
+  43%,
+  70% {
+    background-position: 18px 0px;
+  }
+  73%,
+  90% {
+    background-position: 0px 18px;
+  }
+  93%,
+  100% {
+    background-position: 0px 0px;
   }
 }
