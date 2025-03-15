@@ -7,3 +7,8 @@ const Orders = () => {
 }
 
 export default Orders
+
+export const metadata = {
+  title: "Agora: Orders",
+  description: "Manage and view orders on Agora",
+};
