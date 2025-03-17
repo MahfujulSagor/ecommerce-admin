@@ -2,8 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import SessionProviderWrapper from "@/components/session-provider";
 import Nav from "@/components/nav";
+import SessionProviderWrapper from "@/components/session-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Agora",
-  description: "Agora - Your source for everything",
+  description: "Agora - Your source for the latest tech",
 };
 
 export default function RootLayout({ children }) {

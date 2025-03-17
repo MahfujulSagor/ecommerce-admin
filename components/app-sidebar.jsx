@@ -11,16 +11,16 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { useSession } from "next-auth/react";
 import { TeamSwitcher } from "@/components/team-switcher";
+import { useSession } from "@/context/SessionContext";
 
 export function AppSidebar({ ...props }) {
-  const { data: session } = useSession();
+  const { user } = useSession();
   const data = {
     user: {
-      name: session?.user?.name,
-      email: session?.user?.email,
-      avatar: session?.user?.image,
+      name: user?.name,
+      email: user?.email,
+      avatar: user?.avatar,
     },
     teams: [
       {

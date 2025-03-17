@@ -1,9 +1,18 @@
+import ProductForm from '@/components/productForm';
 import React from 'react'
 
-const NewProduct = () => {
+const CreateProduct= () => {
   return (
-    <div>NewProduct</div>
+    <div>
+      <ProductForm/>
+    </div>
   );
 };
 
-export default NewProduct;
+export default CreateProduct;
+
+export const metadata = {
+  title: 'Agora: Add Products',
+  description: 'Add a new product to the Agora marketplace.',
+};
+

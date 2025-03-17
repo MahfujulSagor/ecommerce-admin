@@ -27,12 +27,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
+import { useSession } from "@/context/SessionContext"
 
 export function NavUser({
   user
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+  const { signOut } = useSession();
 
   return (
     <SidebarMenu>
