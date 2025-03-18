@@ -27,10 +27,6 @@ export const SessionProvider = ({ children }) => {
 
         if (cachedAvatar) {
           setUser({ ...session, avatar: cachedAvatar }); // Set user state with session data and cached avatar
-          console.log("Loaded from cache:", {
-            ...session,
-            avatar: cachedAvatar,
-          });
         } else {
           const userDocuments = await databases.listDocuments(
             appwriteConfig.databaseId,
@@ -50,7 +46,6 @@ export const SessionProvider = ({ children }) => {
           }
 
           setUser({ ...session, avatar: avatarUrl }); // Set user state with session data
-          console.log("Fetched from DB:", { ...session, avatar: avatarUrl });
         }
       } catch (error) {
         console.error("Session check failed:", error);
