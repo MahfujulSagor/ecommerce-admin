@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { TeamSwitcher } from "@/components/team-switcher";
 import { useSession } from "@/context/SessionContext";
+import { ModeToggle } from "./mode-toggle";
 
 export function AppSidebar({ ...props }) {
   const { user } = useSession();
@@ -58,6 +59,7 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <ModeToggle/>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
