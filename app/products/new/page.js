@@ -1,4 +1,4 @@
-import ProductForm from '@/components/productForm';
+import ProductForm from '@/components/product-form';
 import React from 'react'
 
 const CreateProduct= () => {
