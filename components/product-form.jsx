@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,20 +16,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+// import {
+//   Command,
+//   CommandEmpty,
+//   CommandGroup,
+//   CommandInput,
+//   CommandItem,
+//   CommandList,
+// } from "@/components/ui/command";
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from "@/components/ui/popover";
+// import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -61,17 +61,17 @@ const formSchema = z.object({
 });
 
 export default function ProductForm() {
-  const languages = [
-    { label: "English", value: "en" },
-    { label: "French", value: "fr" },
-    { label: "German", value: "de" },
-    { label: "Spanish", value: "es" },
-    { label: "Portuguese", value: "pt" },
-    { label: "Russian", value: "ru" },
-    { label: "Japanese", value: "ja" },
-    { label: "Korean", value: "ko" },
-    { label: "Chinese", value: "zh" },
-  ];
+  // const languages = [
+  //   { label: "English", value: "en" },
+  //   { label: "French", value: "fr" },
+  //   { label: "German", value: "de" },
+  //   { label: "Spanish", value: "es" },
+  //   { label: "Portuguese", value: "pt" },
+  //   { label: "Russian", value: "ru" },
+  //   { label: "Japanese", value: "ja" },
+  //   { label: "Korean", value: "ko" },
+  //   { label: "Chinese", value: "zh" },
+  // ];
 
   const [files, setFiles] = useState(null);
 
@@ -126,7 +126,7 @@ export default function ProductForm() {
 
         <div className="flex gap-8 max-md:flex-wrap">
           <div className="w-full">
-            <FormField
+            {/* <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
@@ -153,11 +153,11 @@ export default function ProductForm() {
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="p-0">
-                      <Command className=''>
+                      <Command className="">
                         <CommandInput placeholder="Search category..." />
-                        <CommandList className=''>
+                        <CommandList className="">
                           <CommandEmpty>No category found.</CommandEmpty>
-                          <CommandGroup className=''>
+                          <CommandGroup className="">
                             {languages.map((language) => (
                               <CommandItem
                                 value={language.label}
@@ -185,11 +185,41 @@ export default function ProductForm() {
                   <FormMessage />
                 </FormItem>
               )}
+            /> */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem className="*:w-full">
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    className=""
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="m@example.com">
+                        m@example.com
+                      </SelectItem>
+                      <SelectItem value="m@google.com">m@google.com</SelectItem>
+                      <SelectItem value="m@support.com">
+                        m@support.com
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
 
           <div className="w-full">
-            <FormField
+            {/* <FormField
               control={form.control}
               name="subcategory"
               render={({ field }) => (
@@ -248,6 +278,36 @@ export default function ProductForm() {
                   <FormMessage />
                 </FormItem>
               )}
+            /> */}
+            <FormField
+              control={form.control}
+              name="brand"
+              render={({ field }) => (
+                <FormItem className="*:w-full">
+                  <FormLabel>Brand</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    className=""
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a brand" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="m@example.com">
+                        m@example.com
+                      </SelectItem>
+                      <SelectItem value="m@google.com">m@google.com</SelectItem>
+                      <SelectItem value="m@support.com">
+                        m@support.com
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
         </div>
@@ -256,9 +316,13 @@ export default function ProductForm() {
           control={form.control}
           name="storage"
           render={({ field }) => (
-            <FormItem className='*:w-full'>
+            <FormItem className="*:w-full">
               <FormLabel>Storage</FormLabel>
-              <Select onValueChange={field.onChange} className='' defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                className=""
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a storage option" />
