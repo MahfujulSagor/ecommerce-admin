@@ -1,405 +1,299 @@
 "use client";
 import React, { useState } from "react";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { TextShimmer } from "./motion-primitives/text-shimmer";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { CloudUpload, Paperclip } from "lucide-react";
-import {
-  FileInput,
-  FileUploader,
-  FileUploaderContent,
-  FileUploaderItem,
-} from "@/components/ui/file-upload";
-import { Textarea } from "@/components/ui/textarea";
+} from "./ui/select";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+import { Trash2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { TextShimmer } from "./motion-primitives/text-shimmer";
+import { toast } from "sonner";
 
 const formSchema = z.object({
-  name: z.string().min(1),
-  category: z.string(),
-  subcategory: z.string(),
-  storage: z.string(),
-  color: z.string().min(1).optional(),
-  images: z.string(),
-  description: z.string(),
-  stock: z.number(),
-  price: z.number(),
+  name: z.string().nonempty("Product name is required"),
+  category: z.string().nonempty("Category is required"),
+  brand: z.string().nonempty("Brand is required"),
+  storage: z.string().optional(),
+  color: z.string().optional(),
+  images: z.array(z.string()).min(1, "At least one image is required").max(6),
+  description: z.string().nonempty("Description is required"),
+  stock: z.coerce.number().int().positive("Stock must be a positive number"),
+  price: z.coerce.number().positive("Price must be a positive number"),
 });
 
-export default function ProductForm() {
-  const languages = [
-    { label: "English", value: "en" },
-    { label: "French", value: "fr" },
-    { label: "German", value: "de" },
-    { label: "Spanish", value: "es" },
-    { label: "Portuguese", value: "pt" },
-    { label: "Russian", value: "ru" },
-    { label: "Japanese", value: "ja" },
-    { label: "Korean", value: "ko" },
-    { label: "Chinese", value: "zh" },
-  ];
-
-  const [files, setFiles] = useState(null);
-
-  const dropZoneConfig = {
-    maxFiles: 5,
-    maxSize: 1024 * 1024 * 4,
-    multiple: true,
-  };
-
-  const form = useForm({
+const NewProduct = () => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    getValues,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      category: "",
+      brand: "",
+      storage: "",
+      color: "",
+      images: [],
+      description: "",
+      stock: "",
+      price: "",
+    },
   });
 
-  function onSubmit(values) {
-    try {
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
-    } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
-    }
-  }
+  // Function to handle file selection
+  const handleImageUpload = (event, field) => {
+    const files = Array.from(event.target.files);
+    const urls = files.map((file) => URL.createObjectURL(file)); // Convert to object URLs
 
+    setValue("images", [...getValues("images"), ...urls]); // Update form state
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      console.log("Creating product", data);
+      // Call the API to create a new product
+      // await createProduct(data);
+      toast.success("Product created successfully");
+    } catch (error) {
+      console.error("Failed to create product", error);
+      toast.error("Failed to create product");
+    }
+  };
   return (
-    <Form {...form}>
-      <div className="text-center">
-        <TextShimmer className="text-3xl font-bold" duration={1}>
+    <div>
+      <div className="w-full flex justify-center items-center pt-5 pb-8">
+        <TextShimmer className="text-3xl font-bold text-center" duration={1}>
           Add New Product
         </TextShimmer>
       </div>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-3xl mx-auto py-10"
+        onSubmit={handleSubmit(onSubmit)}
+        className="max-w-3xl space-y-6 mx-auto"
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product Name</FormLabel>
-              <FormControl>
-                <Input placeholder="name" type="text" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div className="space-y-2">
+          <Label htmlFor="name">Product Name</Label>
+          <Input
+            type="text"
+            name="name"
+            placeholder="Product name"
+            {...register("name")}
+          />
+          {errors.name && (
+            <p className="text-red-500 text-sm">{errors.name.message}</p>
           )}
-        />
-
-        <div className="flex gap-8 max-md:flex-wrap">
-          <div className="w-full">
-            <FormField
-              control={form.control}
+        </div>
+        <div className="flex gap-4 max-md:flex-wrap">
+          <div className="w-full space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Controller
               name="category"
+              control={control}
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Category</FormLabel>
-                  <Popover className="">
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? languages.find(
-                                (language) => language.value === field.value
-                              )?.label
-                            : "Select category"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0">
-                      <Command className=''>
-                        <CommandInput placeholder="Search category..." />
-                        <CommandList className=''>
-                          <CommandEmpty>No category found.</CommandEmpty>
-                          <CommandGroup className=''>
-                            {languages.map((language) => (
-                              <CommandItem
-                                value={language.label}
-                                key={language.value}
-                                onSelect={() => {
-                                  form.setValue("category", language.value);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    language.value === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {language.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Category</SelectLabel>
+                      <SelectItem value="mobiles">Mobiles</SelectItem>
+                      <SelectItem value="laptops">Laptops</SelectItem>
+                      <SelectItem value="tablets">Tablets</SelectItem>
+                      <SelectItem value="accessories">Accessories</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>
-
-          <div className="w-full">
-            <FormField
-              control={form.control}
-              name="subcategory"
+          <div className="w-full space-y-2">
+            <Label htmlFor="brand">Brand</Label>
+            <Controller
+              name="brand"
+              control={control}
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Brand</FormLabel>
-                  <Popover className="">
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? languages.find(
-                                (language) => language.value === field.value
-                              )?.label
-                            : "Select brand"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0">
-                      <Command>
-                        <CommandInput placeholder="Search brand..." />
-                        <CommandList className=''>
-                          <CommandEmpty>No brand found.</CommandEmpty>
-                          <CommandGroup className=''>
-                            {languages.map((language) => (
-                              <CommandItem
-                                value={language.label}
-                                key={language.value}
-                                onSelect={() => {
-                                  form.setValue("brand", language.value);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    language.value === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {language.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Brand</SelectLabel>
+                      <SelectItem value="samsung">Samsung</SelectItem>
+                      <SelectItem value="apple">Apple</SelectItem>
+                      <SelectItem value="dell">Dell</SelectItem>
+                      <SelectItem value="hp">HP</SelectItem>
+                      <SelectItem value="others">Others</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>
         </div>
-
-        <FormField
-          control={form.control}
-          name="storage"
-          render={({ field }) => (
-            <FormItem className='*:w-full'>
-              <FormLabel>Storage</FormLabel>
-              <Select onValueChange={field.onChange} className='' defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a storage option" />
-                  </SelectTrigger>
-                </FormControl>
+        <div className="space-y-2">
+          <Label htmlFor="storage">Storage</Label>
+          <Controller
+            name="storage"
+            control={control}
+            render={({ field }) => (
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select storage option" />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="m@example.com">m@example.com</SelectItem>
-                  <SelectItem value="m@google.com">m@google.com</SelectItem>
-                  <SelectItem value="m@support.com">m@support.com</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>Storage</SelectLabel>
+                    <SelectItem value="64">64GB</SelectItem>
+                    <SelectItem value="128">128GB</SelectItem>
+                    <SelectItem value="256">256GB</SelectItem>
+                    <SelectItem value="512">512GB</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
-              <FormMessage />
-            </FormItem>
+            )}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="color">Color</Label>
+          <Input
+            type="text"
+            name="color"
+            placeholder="Color"
+            {...register("color")}
+          />
+          {errors.color && (
+            <p className="text-red-500 text-sm">{errors.color.message}</p>
           )}
-        />
-
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <Input placeholder="color" type="text" {...field} />
-              </FormControl>
-              <FormDescription>Optional.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="images"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Images</FormLabel>
-              <FormControl>
-                <FileUploader
-                  value={files}
-                  onValueChange={setFiles}
-                  dropzoneOptions={dropZoneConfig}
-                  className="relative bg-background rounded-lg p-2"
-                >
-                  <FileInput
-                    id="fileInput"
-                    className="outline-dashed outline-1 outline-slate-500"
-                  >
-                    <div className="flex items-center justify-center flex-col p-8 w-full">
-                      <CloudUpload className="text-gray-500 w-10 h-10" />
-                      <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold">Click to upload</span>
-                        &nbsp; or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        SVG, PNG, JPG or GIF
-                      </p>
-                    </div>
-                  </FileInput>
-                  <FileUploaderContent>
-                    <div className="flex items-center flex-wrap gap-2">
-                      {files &&
-                        files.length > 0 &&
-                        files.map((file, i) => {
-                          const url = URL.createObjectURL(file);
-                          return (
-                            <FileUploaderItem key={i} index={i}>
-                              {/* <Paperclip className="h-4 w-4 stroke-current" />
-                              <span>{file.name}</span> */}
-                              <Image
-                                src={url}
-                                alt={file.name}
-                                width={100}
-                                height={100}
-                                objectFit="cover"
-                                className="rounded-xl"
-                              />
-                            </FileUploaderItem>
-                          );
-                        })}
-                    </div>
-                  </FileUploaderContent>
-                </FileUploader>
-              </FormControl>
-              <FormDescription>
-                Select a file to upload.{" "}
-                <span className="text-rose-500">Limit: 5</span>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="description"
-                  className="resize-none"
-                  {...field}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="images">Images</Label>
+          <Controller
+            name="images"
+            control={control}
+            render={({ field }) => (
+              <>
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, field)}
+                  className="hidden"
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="w-full min-h-40 border-2 border-dashed"
+                >
+                  <label htmlFor="images">Upload Images</label>
+                </Button>
 
-        <FormField
-          control={form.control}
-          name="stock"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Stock</FormLabel>
-              <FormControl>
-                <Input placeholder="stock amount" type="number" {...field} />
-              </FormControl>
-              <FormDescription>Available product in stock.</FormDescription>
-              <FormMessage />
-            </FormItem>
+                {/* Image Preview */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {field.value.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative w-24 h-24 hover:bg-secondary rounded-lg overflow-hidden"
+                    >
+                      <Image
+                        src={url}
+                        alt={`Preview ${index}`}
+                        width={100}
+                        height={100}
+                        className="object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setValue(
+                            "images",
+                            field.value.filter((_, i) => i !== index)
+                          );
+                        }}
+                        className="absolute top-1 right-1 hover:text-red-400 ease-in-out duration-100"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          />
+          {errors.images && (
+            <p className="text-red-500 text-sm">{errors.images.message}</p>
           )}
-        />
-
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Price</FormLabel>
-              <FormControl>
-                <Input placeholder="product price" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            type="text"
+            name="description"
+            placeholder="Product description"
+            {...register("description")}
+          />
+          {errors.description && (
+            <p className="text-red-500 text-sm">{errors.description.message}</p>
           )}
-        />
-        <Button type="submit">Submit</Button>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="stock">Stock</Label>
+          <Input
+            type="number"
+            name="stock"
+            placeholder="Available stock"
+            {...register("stock")}
+          />
+          {errors.stock && (
+            <p className="text-red-500 text-sm">{errors.stock.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="price">Price</Label>
+          <Input
+            type="number"
+            name="price"
+            placeholder="Product price"
+            {...register("price")}
+          />
+          {errors.price && (
+            <p className="text-red-500 text-sm">{errors.price.message}</p>
+          )}
+        </div>
+        <div>
+          <Button type="submit" className="font-medium">
+            Create
+          </Button>
+        </div>
       </form>
-    </Form>
+    </div>
   );
-}
+};
+
+export default NewProduct;
