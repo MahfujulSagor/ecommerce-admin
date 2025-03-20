@@ -12,11 +12,11 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { TeamSwitcher } from "@/components/team-switcher";
-import { useSession } from "@/context/SessionContext";
 import { ModeToggle } from "./mode-toggle";
+import { useAppwrite } from "@/context/AppwriteContext";
 
 export function AppSidebar({ ...props }) {
-  const { user } = useSession();
+  const { user } = useAppwrite();
   const data = {
     user: {
       name: user?.name,

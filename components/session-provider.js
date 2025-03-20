@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Loader from "./loader.js";
 import { LoginCard } from "./loginCard.js";
-import { SessionProvider, useSession } from "@/context/SessionContext";
+import { SessionProvider, useAppwrite} from "@/context/AppwriteContext.js";
 
 const SessionProviderWrapper = ({ children }) => {
   return (
@@ -16,7 +16,7 @@ const SessionProviderWrapper = ({ children }) => {
 export default SessionProviderWrapper;
 
 const AuthCheck = ({ children }) => {
-  const { user, loading } = useSession();
+  const { user, loading } = useAppwrite();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {

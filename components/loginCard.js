@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/context/SessionContext";
+import { useAppwrite} from "@/context/AppwriteContext";
 import { BeatLoader } from "react-spinners";
 
 // Define the schema for validation
@@ -32,7 +32,7 @@ const signInSchema = z.object({
 });
 
 export function LoginCard() {
-  const { signIn, loading } = useSession();
+  const { signIn, loading } = useAppwrite();
   const router = useRouter();
   // Initialize React Hook Form with Zod validation
   const {

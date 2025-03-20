@@ -27,13 +27,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useSession } from "@/context/SessionContext"
+import { useAppwrite} from "@/context/AppwriteContext"
 
 export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar();
-  const { signOut } = useSession();
+  const { signOut } = useAppwrite();
 
   return (
     <SidebarMenu>
