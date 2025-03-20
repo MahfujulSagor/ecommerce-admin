@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
@@ -20,13 +20,15 @@ import { Trash2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useAppwrite } from "@/context/AppwriteContext";
+import { BeatLoader } from "react-spinners";
 
 const formSchema = z.object({
   name: z.string().nonempty("Product name is required"),
   category: z.string().nonempty("Category is required"),
   brand: z.string().nonempty("Brand is required"),
   storage: z.string().optional(),
-  color: z.string().optional(),
+  color: z.string().nonempty("Color is required"),
   images: z.array(z.string()).min(1, "At least one image is required").max(6),
   description: z.string().nonempty("Description is required"),
   stock: z.coerce.number().int().positive("Stock must be a positive number"),
@@ -34,10 +36,16 @@ const formSchema = z.object({
 });
 
 const NewProduct = () => {
+  const { fetchCategories, createNewProduct, user, loading, uploadImages } =
+    useAppwrite();
+  const [categories, setCategories] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     control,
     getValues,
     formState: { errors },
@@ -56,19 +64,111 @@ const NewProduct = () => {
     },
   });
 
-  // Function to handle file selection
-  const handleImageUpload = (event, field) => {
-    const files = Array.from(event.target.files);
-    const urls = files.map((file) => URL.createObjectURL(file)); // Convert to object URLs
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const response = await fetchCategories();
+        setCategories(response);
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+        toast.error("Failed to fetch categories");
+      }
+    };
+    getCategories();
+  }, []);
 
-    setValue("images", [...getValues("images"), ...urls]); // Update form state
+  const selectedCategory = watch("category");
+
+  // Function to handle file selection
+  const handleImageUpload = (e, field) => {
+    /*
+      ---------------------------------------------Explanation----------------------------------------
+
+      - It's mimicking the behavior of storing images. It only store blob URLs.
+      - The actual image or File objects from input are stored in the state.(imageFiles)
+
+      ---------------------------------------------Problem--------------------------------------------
+       {The data object is the data that the form return when submitted.}
+
+      - When the actual image or File objects are stored in the data object, the form validation fails.
+      - It just doesn't let the onSubmit function to be called. It just stops at the form validation.
+      - The form validation fails because the actual image or File objects are not serializable.
+      - But the form validation works when the blob URLs are stored in data object.
+      - Which is why storing the blob URLs in the data objcet is a workaround.
+
+      ---------------------------------------------Solution-------------------------------------------
+
+      - The actual image or File objects are stored in the state(imageFiles) for uploading to Appwrite storage.
+      - The blob URLs are stored in the data object for form validation.
+      - The blob URLs are stored in the data object for previewing the images.
+    */
+    const files = Array.from(e.target.files);
+    const urls = files.map((file) => URL.createObjectURL(file));
+
+    // Store the returned File objects (images) from the file input in state
+    setImageFiles((pervItems) => [...pervItems, ...files]);
+
+    if (!files.length) return;
+
+    // Store original files for uploading
+    const existingFiles = Array.isArray(getValues("images"))
+      ? getValues("images")
+      : [];
+    const newFiles = [...existingFiles, ...urls];
+
+    // Check if image limit is reached
+    if (newFiles.length > 6) {
+      toast.error("You can upload a maximum of 6 images.");
+      return; // Stop if the image limit is exceeded
+    }
+
+    setValue("images", newFiles);
   };
 
+  // handle form submission
   const onSubmit = async (data) => {
     try {
-      console.log("Creating product", data);
-      // Call the API to create a new product
-      // await createProduct(data);
+      // Find the category object from the list
+      const matchedCategory = categories.find(
+        (c) => c.name.toLowerCase() === data.category.toLowerCase()
+      );
+
+      if (!matchedCategory) {
+        console.error("Category not found:", data.category);
+        toast.error("Category list was outdated. Please try again.");
+        return; // Exit early
+      }
+
+      if (!data.images && !data.images.length > 0) {
+        toast.error("Please upload at least one image.");
+        return;
+      }
+
+      // Filter out the images and category from the data
+      const { category, images, ...filteredData } = data;
+
+      // upload images (state) in appwrite bucket
+      const uploadedImageUrls = await uploadImages(imageFiles);
+
+      if (!uploadedImageUrls || uploadedImageUrls.length === 0) {
+        toast.error("Image upload failed. Please try again.");
+        return;
+      }
+
+      // Create the new product with actual image URLs
+      const product = await createNewProduct({
+        ...filteredData,
+        category_id: matchedCategory.$id,
+        images: uploadedImageUrls,
+        seller_id: user.$id,
+      });
+
+      if (!product) {
+        toast.error("Failed to create product");
+        return;
+      }
+
+      console.log("Product created successfully", product);
       toast.success("Product created successfully");
     } catch (error) {
       console.error("Failed to create product", error);
@@ -115,10 +215,21 @@ const NewProduct = () => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Category</SelectLabel>
-                      <SelectItem value="mobiles">Mobiles</SelectItem>
-                      <SelectItem value="laptops">Laptops</SelectItem>
-                      <SelectItem value="tablets">Tablets</SelectItem>
-                      <SelectItem value="accessories">Accessories</SelectItem>
+                      {categories.length > 0 ? (
+                        categories.map((category) => (
+                          <SelectItem
+                            key={category.$id}
+                            value={category.name}
+                            className="capitalize"
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem disabled value="Loading">
+                          Loading...
+                        </SelectItem>
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -153,32 +264,34 @@ const NewProduct = () => {
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="storage">Storage</Label>
-          <Controller
-            name="storage"
-            control={control}
-            render={({ field }) => (
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select storage option" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Storage</SelectLabel>
-                    <SelectItem value="64">64GB</SelectItem>
-                    <SelectItem value="128">128GB</SelectItem>
-                    <SelectItem value="256">256GB</SelectItem>
-                    <SelectItem value="512">512GB</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
+        {["mobiles", "laptops", "tablets"].includes(selectedCategory) && (
+          <div className="space-y-2">
+            <Label htmlFor="storage">Storage</Label>
+            <Controller
+              name="storage"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select storage option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Storage</SelectLabel>
+                      <SelectItem value="64">64GB</SelectItem>
+                      <SelectItem value="128">128GB</SelectItem>
+                      <SelectItem value="256">256GB</SelectItem>
+                      <SelectItem value="512">512GB</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="color">Color</Label>
           <Input
@@ -203,15 +316,27 @@ const NewProduct = () => {
                   id="images"
                   multiple
                   accept="image/*"
-                  onChange={(e) => handleImageUpload(e, field)}
+                  onChange={(event) => handleImageUpload(event, field)}
                   className="hidden"
+                  disabled={field.value.length >= 6}
                 />
                 <Button
                   asChild
                   variant="ghost"
-                  className="w-full min-h-40 border-2 border-dashed"
+                  disabled={field.value.length >= 6}
+                  className={`w-full min-h-40 border-2 border-dashed cursor-pointer ${
+                    field.value.length >= 6 && "opacity-50 cursor-not-allowed"
+                  }`}
                 >
-                  <label htmlFor="images">Upload Images</label>
+                  <Label
+                    htmlFor="images"
+                    className="flex gap-1 max:sm:flex-wrap"
+                  >
+                    Upload Images.{" "}
+                    <span className="text-rose-400">
+                      Maximun 6 images allowed
+                    </span>
+                  </Label>
                 </Button>
 
                 {/* Image Preview */}
@@ -236,7 +361,7 @@ const NewProduct = () => {
                             field.value.filter((_, i) => i !== index)
                           );
                         }}
-                        className="absolute top-1 right-1 hover:text-red-400 ease-in-out duration-100"
+                        className="absolute top-1 right-1 text-gray-400 hover:text-red-400 ease-in-out duration-100"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -287,8 +412,12 @@ const NewProduct = () => {
           )}
         </div>
         <div>
-          <Button type="submit" className="font-medium">
-            Create
+          <Button
+            // disabled={loading}
+            type="submit"
+            className="font-medium cursor-pointer"
+          >
+            {loading ? <BeatLoader /> : "Create Product"}
           </Button>
         </div>
       </form>

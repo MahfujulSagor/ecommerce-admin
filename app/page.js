@@ -1,10 +1,10 @@
 "use client";
 
-import { useSession } from "@/context/SessionContext";
+import { useAppwrite } from "@/context/AppwriteContext";
 import Image from "next/image";
 
 export default function Home() {
-  const { user } = useSession();
+  const { user } = useAppwrite();
 
   return (
     <div className="flex gap-8 items-center justify-center">

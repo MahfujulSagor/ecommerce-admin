@@ -1,13 +1,13 @@
 "use client";
-import { account, appwriteConfig, databases } from "@/utils/appwrite";
-import { Query } from "appwrite";
+import { account, appwriteConfig, databases, storage } from "@/utils/appwrite";
+import { ID, Query } from "appwrite";
 import { createContext, useState, useEffect, useContext } from "react";
 
 // Create context for session management
 const SessionContext = createContext();
 
 // Custom hook to use session context
-export const useSession = () => {
+export const useAppwrite = () => {
   return useContext(SessionContext);
 };
 
@@ -88,6 +88,81 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
+  // fetch categories
+  const fetchCategories = async () => {
+    try {
+      const categories = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.categoryCollectionId
+      );
+
+      if (categories.error) {
+        throw new Error(categories.error.message);
+      }
+
+      return categories.documents;
+    } catch (error) {
+      console.error("Fetch categories failed:", error.message);
+      return [];
+    }
+  };
+
+  // upload images to appwrite storage
+  const uploadImages = async (files) => {
+    setLoading(true); // Set loading to true while uploading images
+    try {
+      if (files.length === 0) {
+        return [];
+      }
+
+      const promises = files.map(async (file) => {
+        try {
+          const response = await storage.createFile(
+            appwriteConfig.storageId,
+            ID.unique(),
+            file
+          );
+
+          // Generate the file's URL
+          return storage.getFilePreview(appwriteConfig.storageId, response.$id);
+        } catch (error) {
+          console.error("Upload image failed:", error.message);
+          return null;
+        }
+      });
+
+      const imageUrls = await Promise.all(promises);
+
+      console.log(imageUrls);
+      return imageUrls;
+    } catch (error) {
+      console.error("Upload images failed:", error.message);
+      return [];
+    } finally {
+      setLoading(false); // Set loading to false after image upload
+    }
+  };
+
+  // create product in appwrite database
+  const createNewProduct = async (data) => {
+    setLoading(true); // Set loading to true while creating product
+    try {
+      const product = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.productCollectionId,
+        ID.unique(),
+        data
+      );
+
+      return product;
+    } catch (error) {
+      console.error("Create product failed:", error.message);
+      return null;
+    } finally {
+      setLoading(false); // Set loading to false after product
+    }
+  };
+
   // Pass session state and actions as context value
   return (
     <SessionContext.Provider
@@ -95,6 +170,9 @@ export const SessionProvider = ({ children }) => {
         user,
         loading,
         signIn,
+        fetchCategories,
+        uploadImages,
+        createNewProduct,
         signOut,
       }}
     >
