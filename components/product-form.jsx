@@ -16,12 +16,14 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useAppwrite } from "@/context/AppwriteContext";
 import { BeatLoader } from "react-spinners";
+import { decrypt } from "./encrypt-decrypt";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().nonempty("Product name is required"),
@@ -40,6 +42,7 @@ const NewProduct = () => {
     useAppwrite();
   const [categories, setCategories] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
+  const router = useRouter();
 
   const {
     register,
@@ -155,12 +158,20 @@ const NewProduct = () => {
         return;
       }
 
+      // I know this is dumb but i don't have time to fix it
+      const userId = decrypt(user.encryptedUserId, user.iv);
+
+      if (!userId) {
+        toast.error("Failed to get user ID");
+        return;
+      }
+
       // Create the new product with actual image URLs
       const product = await createNewProduct({
         ...filteredData,
         category_id: matchedCategory.$id,
         images: uploadedImageUrls,
-        seller_id: user.$id,
+        seller_id: userId,
       });
 
       if (!product) {
@@ -175,9 +186,16 @@ const NewProduct = () => {
       toast.error("Failed to create product");
     }
   };
+
+  const handleBackButtonClick = ()=> {
+    router.back();
+  };
   return (
-    <div>
-      <div className="w-full flex justify-center items-center pt-5 pb-8">
+    <div className="mb-20">
+      <div>
+        <Button variant='secondary' onClick={handleBackButtonClick} className='cursor-pointer' ><ArrowLeft/></Button>
+      </div>
+      <div className="w-full flex justify-center items-center h-24">
         <TextShimmer className="text-3xl font-bold text-center" duration={1}>
           Add New Product
         </TextShimmer>
@@ -191,6 +209,7 @@ const NewProduct = () => {
           <Input
             type="text"
             name="name"
+            autoFocus
             placeholder="Product name"
             {...register("name")}
           />
@@ -254,6 +273,8 @@ const NewProduct = () => {
                       <SelectLabel>Brand</SelectLabel>
                       <SelectItem value="samsung">Samsung</SelectItem>
                       <SelectItem value="apple">Apple</SelectItem>
+                      <SelectItem value="google">Google</SelectItem>
+                      <SelectItem value="microsoft">Microsoft</SelectItem>
                       <SelectItem value="dell">Dell</SelectItem>
                       <SelectItem value="hp">HP</SelectItem>
                       <SelectItem value="others">Others</SelectItem>
@@ -413,9 +434,9 @@ const NewProduct = () => {
         </div>
         <div>
           <Button
-            // disabled={loading}
+            disabled={loading}
             type="submit"
-            className="font-medium cursor-pointer"
+            className="font-medium cursor-pointer w-full"
           >
             {loading ? <BeatLoader /> : "Create Product"}
           </Button>
