@@ -1,17 +1,18 @@
-import Link from 'next/link';
-import React from 'react'
+import ProductTable from "@/components/ProductTable";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const Products = () => {
   return (
     <div>
-      <Link href={'/products/new'}>add new product</Link>
+      <Button className="">
+        <Link href={"/products/new"} className="capitalize font-medium">
+          add new product
+        </Link>
+      </Button>
+      <ProductTable />
     </div>
-  )
-}
+  );
+};
 
 export default Products;
-
-export const metadata = {
-  title: 'Agora: Products',
-  description: 'Explore the various products available on Agora.',
-};

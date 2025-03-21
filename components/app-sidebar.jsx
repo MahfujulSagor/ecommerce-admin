@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Truck, Store, Settings2, LayoutDashboard, Database } from "lucide-react";
+import { Truck, Store, Settings2, LayoutDashboard, Database, Tag } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -39,6 +39,11 @@ export function AppSidebar({ ...props }) {
         title: "Products",
         url: "/products",
         icon: Database,
+      },
+      {
+        title: "Categories",
+        url: "/categories",
+        icon: Tag,
       },
       {
         title: "Orders",

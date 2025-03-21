@@ -1,10 +1,13 @@
+import Link from 'next/link';
 import React from 'react'
 
 const Categories = () => {
   return (
-    <div>Categories</div>
-  )
-}
+    <div>
+      <Link href="/categories/new">Add new categories</Link>
+    </div>
+  );
+};
 
 export default Categories
 
