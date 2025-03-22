@@ -38,12 +38,14 @@ export default function ProductTable() {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async (cursor = null) => {
+  const fetchProducts = async ( id, path ) => {
     try {
       const query = [Query.limit(5), Query.orderDesc("$createdAt")];
 
-      if (cursor) {
-        query.push(Query.cursorAfter(cursor));
+      if (id && path === "before") {
+        query.push(Query.cursorBefore(id));
+      }else if (id && path === "after") {
+        query.push(Query.cursorAfter(id));
       }
 
       const productsResponse = await databases.listDocuments(
@@ -131,7 +133,10 @@ export default function ProductTable() {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious />
+            <PaginationPrevious
+              onClick={() => fetchProducts(nextCursor, "before")}
+              className='cursor-pointer'
+            />
           </PaginationItem>
           <PaginationLink>1</PaginationLink>
           <PaginationItem></PaginationItem>
@@ -142,7 +147,10 @@ export default function ProductTable() {
             <PaginationEllipsis />
           </PaginationItem>
           <PaginationItem>
-            <PaginationNext onClick={()=> fetchProducts(nextCursor)}/>
+            <PaginationNext
+              onClick={() => fetchProducts(nextCursor, "after")}
+              className='cursor-pointer'
+            />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
