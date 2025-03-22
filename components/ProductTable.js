@@ -75,7 +75,6 @@ export default function ProductTable() {
 
       setData(updatedProducts);
       setNextCursor(lastElement);
-      // return { products: updatedProducts, cursor: lastElement };
     } catch (error) {
       console.error("Fetch products failed:", error.message);
       return [];
