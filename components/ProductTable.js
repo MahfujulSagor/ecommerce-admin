@@ -17,30 +17,69 @@ import {
 } from "@/components/ui/table";
 import { columns } from "@/utils/columns";
 import { useAppwrite } from "@/context/AppwriteContext";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
+import { appwriteConfig, databases } from "@/utils/appwrite";
+import { Query } from "appwrite";
 
 export default function ProductTable() {
-  const { fetchProducts } = useAppwrite();
   const [filter, setFilter] = useState("");
   const [data, setData] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
 
   useEffect(() => {
-    // fetch products from appwrite database
-    const getProducts = async () => {
-      try {
-        const products = await fetchProducts();
-        if (!products) {
-          console.error("Fetch products failed:", products.error.message);
-          return [];
-        }
-        setData(products);
-      } catch (error) {
-        console.error("Fetch products failed:", error.message);
-        return [];
-      }
-    };
+    fetchProducts();
+  }, []);
 
-    getProducts();
-  }, [fetchProducts]);
+  const fetchProducts = async (cursor = null) => {
+    try {
+      const query = [Query.limit(5), Query.orderDesc("$createdAt")];
+
+      if (cursor) {
+        query.push(Query.cursorAfter(cursor));
+      }
+
+      const productsResponse = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.productCollectionId,
+        query
+      );
+
+      const products = productsResponse.documents;
+
+      const lastElement = products[products.length - 1].$id;
+
+      // Fetch categories (if necessary)
+      const categoriesResponse = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.categoryCollectionId
+      );
+      const categories = categoriesResponse.documents;
+
+      const categoryMap = {};
+      categories.forEach((category) => {
+        categoryMap[category.$id] = category.name;
+      });
+
+      const updatedProducts = products.map((product) => ({
+        ...product,
+        category: categoryMap[product.category_id] || "Unknown",
+      }));
+
+      setData(updatedProducts);
+      setNextCursor(lastElement);
+    } catch (error) {
+      console.error("Fetch products failed:", error.message);
+      return [];
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -88,6 +127,25 @@ export default function ProductTable() {
             ))}
         </TableBody>
       </Table>
+      {/* Pagination */}
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious />
+          </PaginationItem>
+          <PaginationLink>1</PaginationLink>
+          <PaginationItem></PaginationItem>
+          <PaginationLink>2</PaginationLink>
+          <PaginationItem></PaginationItem>
+          <PaginationLink>3</PaginationLink>
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationNext onClick={()=> fetchProducts(nextCursor)}/>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }
