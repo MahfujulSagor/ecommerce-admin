@@ -200,39 +200,47 @@ export const SessionProvider = ({ children }) => {
   };
 
   // fetch products from appwrite database
-  const fetchProducts = async () => {
-    try {
-      const productsResponse = await databases.listDocuments(
-        appwriteConfig.databaseId,
-        appwriteConfig.productCollectionId,
-        [Query.limit(5)],
-      );
+  // const fetchProducts = async (cursor = null) => {
+  //   try {
+  //     const query = [Query.limit(5), Query.orderDesc("$createdAt")];
 
-      const products = productsResponse.documents;
+  //     if (cursor) {
+  //       query.push(Query.cursorAfter(cursor));
+  //     }
 
-      // Fetch categories (if necessary)
-      const categoriesResponse = await databases.listDocuments(
-        appwriteConfig.databaseId,
-        appwriteConfig.categoryCollectionId
-      );
-      const categories = categoriesResponse.documents;
+  //     const productsResponse = await databases.listDocuments(
+  //       appwriteConfig.databaseId,
+  //       appwriteConfig.productCollectionId,
+  //       query
+  //     );
 
-      const categoryMap = {};
-      categories.forEach((category) => {
-        categoryMap[category.$id] = category.name;
-      });
+  //     const products = productsResponse.documents;
 
-      const updatedProducts = products.map((product) => ({
-        ...product,
-        category: categoryMap[product.category_id] || "Unknown",
-      }));
+  //     const lastElement = products[products.length - 1].$id;
 
-      return updatedProducts;
-    } catch (error) {
-      console.error("Fetch products failed:", error.message);
-      return null;
-    }
-  };
+  //     // Fetch categories (if necessary)
+  //     const categoriesResponse = await databases.listDocuments(
+  //       appwriteConfig.databaseId,
+  //       appwriteConfig.categoryCollectionId
+  //     );
+  //     const categories = categoriesResponse.documents;
+
+  //     const categoryMap = {};
+  //     categories.forEach((category) => {
+  //       categoryMap[category.$id] = category.name;
+  //     });
+
+  //     const updatedProducts = products.map((product) => ({
+  //       ...product,
+  //       category: categoryMap[product.category_id] || "Unknown",
+  //     }));
+
+  //     return { products: updatedProducts, cursor: lastElement};
+  //   } catch (error) {
+  //     console.error("Fetch products failed:", error.message);
+  //     return [];
+  //   }
+  // };
 
   // Pass session state and actions as context value
   return (
@@ -245,7 +253,7 @@ export const SessionProvider = ({ children }) => {
         fetchCategories,
         uploadImages,
         createNewProduct,
-        fetchProducts,
+        // fetchProducts,
         signOut,
       }}
     >
