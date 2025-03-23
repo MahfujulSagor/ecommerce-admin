@@ -16,13 +16,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { columns } from "@/utils/columns";
-import { useAppwrite } from "@/context/AppwriteContext";
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "./ui/pagination";
@@ -33,19 +31,26 @@ export default function ProductTable() {
   const [filter, setFilter] = useState("");
   const [data, setData] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
+  const [prevCursor, setPrevCursor] = useState(null);
+  const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async ( id, path ) => {
-    try {
-      const query = [Query.limit(5), Query.orderDesc("$createdAt")];
+  const fetchProducts = async (id = null, direction = "next") => {
+    if (isFetching) return; // Prevent multiple requests
+    setIsFetching(true);
 
-      if (id && path === "before") {
-        query.push(Query.cursorBefore(id));
-      }else if (id && path === "after") {
-        query.push(Query.cursorAfter(id));
+    try {
+      let query = [Query.limit(8), Query.orderAsc("$createdAt")];
+
+      if (id) {
+        if (direction === "next") {
+          query.push(Query.cursorAfter(id));
+        } else {
+          query.push(Query.cursorBefore(id));
+        }
       }
 
       const productsResponse = await databases.listDocuments(
@@ -56,30 +61,38 @@ export default function ProductTable() {
 
       const products = productsResponse.documents;
 
-      const lastElement = products[products.length - 1].$id;
+      if (products.length === 0) {
+        setIsFetching(false);
+        return;
+      }
 
-      // Fetch categories (if necessary)
+      // Set the pagination cursors
+      setPrevCursor(products[0]?.$id || null);
+      setNextCursor(products[products.length - 1]?.$id || null);
+
+      // Fetch categories
       const categoriesResponse = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.categoryCollectionId
       );
-      const categories = categoriesResponse.documents;
 
+      const categories = categoriesResponse.documents;
       const categoryMap = {};
       categories.forEach((category) => {
         categoryMap[category.$id] = category.name;
       });
 
+      // Map categories to products
       const updatedProducts = products.map((product) => ({
         ...product,
-        category: categoryMap[product.category_id] || "Unknown",
+        category: categoryMap[product.category_id.$id] || "Unknown",
       }));
 
       setData(updatedProducts);
-      setNextCursor(lastElement);
     } catch (error) {
       console.error("Fetch products failed:", error.message);
-      return [];
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -134,22 +147,23 @@ export default function ProductTable() {
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              onClick={() => fetchProducts(nextCursor, "before")}
-              className='cursor-pointer'
+              onClick={() => prevCursor && fetchProducts(prevCursor, "prev")}
+              className={`cursor-pointer ${
+                !prevCursor ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={!prevCursor}
             />
           </PaginationItem>
-          <PaginationLink>1</PaginationLink>
-          <PaginationItem></PaginationItem>
-          <PaginationLink>2</PaginationLink>
-          <PaginationItem></PaginationItem>
-          <PaginationLink>3</PaginationLink>
           <PaginationItem>
             <PaginationEllipsis />
           </PaginationItem>
           <PaginationItem>
             <PaginationNext
-              onClick={() => fetchProducts(nextCursor, "after")}
-              className='cursor-pointer'
+              onClick={() => nextCursor && fetchProducts(nextCursor, "next")}
+              className={`cursor-pointer ${
+                !nextCursor ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={!nextCursor}
             />
           </PaginationItem>
         </PaginationContent>
