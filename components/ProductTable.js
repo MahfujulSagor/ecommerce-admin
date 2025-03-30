@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -34,67 +34,69 @@ export default function ProductTable() {
   const [prevCursor, setPrevCursor] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
 
+  useCallback(() => {
+    const fetchProducts = async (id = null, direction = "next") => {
+      if (isFetching) return; // Prevent multiple requests
+      setIsFetching(true);
+
+      try {
+        let query = [Query.limit(8), Query.orderAsc("$createdAt")];
+
+        if (id) {
+          if (direction === "next") {
+            query.push(Query.cursorAfter(id));
+          } else {
+            query.push(Query.cursorBefore(id));
+          }
+        }
+
+        const productsResponse = await databases.listDocuments(
+          appwriteConfig.databaseId,
+          appwriteConfig.productCollectionId,
+          query
+        );
+
+        const products = productsResponse.documents;
+
+        if (products.length === 0) {
+          setIsFetching(false);
+          return;
+        }
+
+        // Set the pagination cursors
+        setPrevCursor(products[0]?.$id || null);
+        setNextCursor(products[products.length - 1]?.$id || null);
+
+        // Fetch categories
+        const categoriesResponse = await databases.listDocuments(
+          appwriteConfig.databaseId,
+          appwriteConfig.categoryCollectionId
+        );
+
+        const categories = categoriesResponse.documents;
+        const categoryMap = {};
+        categories.forEach((category) => {
+          categoryMap[category.$id] = category.name;
+        });
+
+        // Map categories to products
+        const updatedProducts = products.map((product) => ({
+          ...product,
+          category: categoryMap[product.category_id.$id] || "Unknown",
+        }));
+
+        setData(updatedProducts);
+      } catch (error) {
+        console.error("Fetch products failed:", error.message);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+  }, [isFetching]);
+
   useEffect(() => {
     fetchProducts();
   }, []);
-
-  const fetchProducts = async (id = null, direction = "next") => {
-    if (isFetching) return; // Prevent multiple requests
-    setIsFetching(true);
-
-    try {
-      let query = [Query.limit(8), Query.orderAsc("$createdAt")];
-
-      if (id) {
-        if (direction === "next") {
-          query.push(Query.cursorAfter(id));
-        } else {
-          query.push(Query.cursorBefore(id));
-        }
-      }
-
-      const productsResponse = await databases.listDocuments(
-        appwriteConfig.databaseId,
-        appwriteConfig.productCollectionId,
-        query
-      );
-
-      const products = productsResponse.documents;
-
-      if (products.length === 0) {
-        setIsFetching(false);
-        return;
-      }
-
-      // Set the pagination cursors
-      setPrevCursor(products[0]?.$id || null);
-      setNextCursor(products[products.length - 1]?.$id || null);
-
-      // Fetch categories
-      const categoriesResponse = await databases.listDocuments(
-        appwriteConfig.databaseId,
-        appwriteConfig.categoryCollectionId
-      );
-
-      const categories = categoriesResponse.documents;
-      const categoryMap = {};
-      categories.forEach((category) => {
-        categoryMap[category.$id] = category.name;
-      });
-
-      // Map categories to products
-      const updatedProducts = products.map((product) => ({
-        ...product,
-        category: categoryMap[product.category_id.$id] || "Unknown",
-      }));
-
-      setData(updatedProducts);
-    } catch (error) {
-      console.error("Fetch products failed:", error.message);
-    } finally {
-      setIsFetching(false);
-    }
-  };
 
   const table = useReactTable({
     data,
